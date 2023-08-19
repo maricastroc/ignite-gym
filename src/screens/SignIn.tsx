@@ -1,10 +1,11 @@
 import { VStack, Image, Center, Text, Heading, ScrollView } from 'native-base'
 import BackgroundImg from '@assets/background.png'
 import LogoSvg from '@assets/logoignite.svg'
-import { Input } from '@components/Input'
-import { Button } from '@components/Button'
 import { useNavigation } from '@react-navigation/native'
 import { AuthNavigatorRoutesProps } from '@routes/auth.routes'
+
+import { Input } from '@components/Input'
+import { Button } from '@components/Button'
 
 export function SignIn() {
   const navigation = useNavigation<AuthNavigatorRoutesProps>()
