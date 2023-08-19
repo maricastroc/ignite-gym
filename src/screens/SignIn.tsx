@@ -1,14 +1,43 @@
 import { VStack, Image, Center, Text, Heading, ScrollView } from 'native-base'
-import BackgroundImg from '@assets/background.png'
-import LogoSvg from '@assets/logoignite.svg'
 import { useNavigation } from '@react-navigation/native'
 import { AuthNavigatorRoutesProps } from '@routes/auth.routes'
+
+import { useForm, Controller } from 'react-hook-form'
+import * as yup from 'yup'
+import { yupResolver } from '@hookform/resolvers/yup'
+
+import BackgroundImg from '@assets/background.png'
+import LogoSvg from '@assets/logoignite.svg'
 
 import { Input } from '@components/Input'
 import { Button } from '@components/Button'
 
+const signInSchema = yup.object({
+  email: yup
+    .string()
+    .required('Please, inform your e-mail.')
+    .email('Invalid e-mail.'),
+  password: yup.string().required('Please, inform your password.'),
+})
+
+type FormDataProps = {
+  email: string
+  password: string
+}
+
 export function SignIn() {
   const navigation = useNavigation<AuthNavigatorRoutesProps>()
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormDataProps>({
+    resolver: yupResolver(signInSchema),
+  })
+
+  function handleSignIn({ email, password }: FormDataProps) {
+    console.log({ email, password })
+  }
 
   function handleNewAccount() {
     navigation.navigate('signUp')
@@ -37,13 +66,36 @@ export function SignIn() {
           <Heading color="gray.100" fontSize="xl" mb={6} fontFamily="heading">
             Access your account
           </Heading>
-          <Input
-            placeholder="Email"
-            keyboardType="email-address"
-            autoCapitalize="none"
+          <Controller
+            control={control}
+            name="email"
+            render={({ field: { onChange, value } }) => (
+              <Input
+                placeholder="E-mail"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                onChangeText={onChange}
+                value={value}
+                errorMessage={errors.email?.message}
+              />
+            )}
           />
-          <Input placeholder="Password" secureTextEntry />
-          <Button title="Access" />
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, value } }) => (
+              <Input
+                placeholder="Password"
+                secureTextEntry
+                onChangeText={onChange}
+                value={value}
+                onSubmitEditing={handleSubmit(handleSignIn)}
+                errorMessage={errors.password?.message}
+                returnKeyType="send"
+              />
+            )}
+          />
+          <Button title="Access" onPress={handleSubmit(handleSignIn)} />
           <Center mt={24}>
             <Text color="gray.100" fontSize="sm" fontFamily="body" mb={3}>
               Still don&apos;t have access?

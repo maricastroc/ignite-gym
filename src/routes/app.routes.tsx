@@ -11,7 +11,6 @@ import HomeSvg from '@assets/home.svg'
 import HistorySvg from '@assets/history.svg'
 import ProfileSvg from '@assets/profile.svg'
 import { useTheme } from 'native-base'
-import { Platform } from 'react-native'
 
 type AppRoutes = {
   home: undefined
