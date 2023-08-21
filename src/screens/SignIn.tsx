@@ -1,4 +1,12 @@
-import { VStack, Image, Center, Text, Heading, ScrollView } from 'native-base'
+import {
+  VStack,
+  Image,
+  Center,
+  Text,
+  Heading,
+  ScrollView,
+  useToast,
+} from 'native-base'
 import { useNavigation } from '@react-navigation/native'
 import { AuthNavigatorRoutesProps } from '@routes/auth.routes'
 
@@ -11,12 +19,12 @@ import LogoSvg from '@assets/logoignite.svg'
 
 import { Input } from '@components/Input'
 import { Button } from '@components/Button'
+import { useAuth } from '@hooks/useAuth'
+import { AppError } from '@utils/AppError'
+import { useState } from 'react'
 
 const signInSchema = yup.object({
-  email: yup
-    .string()
-    .required('Please, inform your e-mail.')
-    .email('Invalid e-mail.'),
+  email: yup.string().required('Please, inform your e-mail.'),
   password: yup.string().required('Please, inform your password.'),
 })
 
@@ -27,6 +35,7 @@ type FormDataProps = {
 
 export function SignIn() {
   const navigation = useNavigation<AuthNavigatorRoutesProps>()
+
   const {
     control,
     handleSubmit,
@@ -35,8 +44,31 @@ export function SignIn() {
     resolver: yupResolver(signInSchema),
   })
 
-  function handleSignIn({ email, password }: FormDataProps) {
-    console.log({ email, password })
+  const { signIn } = useAuth()
+
+  const toast = useToast()
+
+  const [isLoading, setIsLoading] = useState(false)
+
+  async function handleSignIn({ email, password }: FormDataProps) {
+    try {
+      setIsLoading(true)
+      await signIn(email, password)
+    } catch (error) {
+      const isAppError = error instanceof AppError
+
+      const title = isAppError
+        ? error.message
+        : 'Error creating account. Please, try again later'
+
+      toast.show({
+        title,
+        placement: 'top',
+        bgColor: 'red.500',
+      })
+
+      setIsLoading(false)
+    }
   }
 
   function handleNewAccount() {
@@ -95,7 +127,11 @@ export function SignIn() {
               />
             )}
           />
-          <Button title="Access" onPress={handleSubmit(handleSignIn)} />
+          <Button
+            title={isLoading ? 'Loading...' : 'Access'}
+            onPress={handleSubmit(handleSignIn)}
+            isLoading={isLoading}
+          />
           <Center mt={24}>
             <Text color="gray.100" fontSize="sm" fontFamily="body" mb={3}>
               Still don&apos;t have access?

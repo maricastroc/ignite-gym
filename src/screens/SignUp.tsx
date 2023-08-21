@@ -1,6 +1,16 @@
-import { VStack, Image, Center, Text, Heading, ScrollView } from 'native-base'
+import {
+  VStack,
+  Image,
+  Center,
+  Text,
+  Heading,
+  ScrollView,
+  useToast,
+} from 'native-base'
 import { useForm, Controller } from 'react-hook-form'
 import { useNavigation } from '@react-navigation/native'
+
+import { api } from '@services/api'
 
 import * as yup from 'yup'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -10,6 +20,10 @@ import LogoSvg from '@assets/logoignite.svg'
 
 import { Input } from '@components/Input'
 import { Button } from '@components/Button'
+
+import { AppError } from '@utils/AppError'
+import { AuthNavigatorRoutesProps } from '@routes/auth.routes'
+import { useState } from 'react'
 
 const signUpSchema = yup.object({
   name: yup.string().required('Please, inform your name.'),
@@ -35,7 +49,7 @@ type FormDataProps = {
 }
 
 export function SignUp() {
-  const navigation = useNavigation()
+  const navigation = useNavigation<AuthNavigatorRoutesProps>()
   const {
     control,
     handleSubmit,
@@ -44,17 +58,41 @@ export function SignUp() {
     resolver: yupResolver(signUpSchema),
   })
 
+  const [isLoading, setIsLoading] = useState(false)
+
+  const toast = useToast()
+
   function handleGoBack() {
     navigation.goBack()
   }
 
-  function handleSignUp({
-    name,
-    email,
-    password,
-    passwordConfirm,
-  }: FormDataProps) {
-    console.log({ name, email, password, passwordConfirm })
+  async function handleSignUp({ name, email, password }: FormDataProps) {
+    try {
+      setIsLoading(true)
+      await api.post('/users', { name, email, password })
+
+      navigation.navigate('signIn')
+
+      toast.show({
+        title: 'Account successfully created!',
+        placement: 'top',
+        bgColor: 'green.500',
+      })
+    } catch (error) {
+      const isAppError = error instanceof AppError
+
+      const title = isAppError
+        ? error.message
+        : 'Error creating account. Please, try again later'
+
+      toast.show({
+        title,
+        placement: 'top',
+        bgColor: 'red.500',
+      })
+
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -137,6 +175,7 @@ export function SignUp() {
           <Button
             title="Create and Access"
             onPress={handleSubmit(handleSignUp)}
+            isLoading={isLoading}
           />
           <Button
             title="Back to Login"
