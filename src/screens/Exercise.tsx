@@ -37,9 +37,6 @@ export function Exercise() {
   const route = useRoute()
   const { exerciseId } = route.params as RouteParamsProps
 
-  console.log(exerciseId)
-  console.log(exercise?.demo)
-
   const toast = useToast()
 
   function handleGoBack() {
