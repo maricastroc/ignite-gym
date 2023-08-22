@@ -7,9 +7,10 @@ import {
   ScrollView,
   Text,
   VStack,
+  useToast,
 } from 'native-base'
 import { Feather } from '@expo/vector-icons'
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation, useRoute } from '@react-navigation/native'
 import { AppNavigatorRoutesProps } from '@routes/app.routes'
 import { TouchableOpacity } from 'react-native'
 
@@ -18,13 +19,58 @@ import SeriesSvg from '@assets/series.svg'
 import RepsSvg from '@assets/repetitions.svg'
 
 import { Button } from '@components/Button'
+import { useEffect, useState } from 'react'
+import { api } from '@services/api'
+import { ExerciseDTO } from '@dtos/ExerciseDTO'
+import { AppError } from '@utils/AppError'
+import { Loading } from '@components/Loading'
+
+type RouteParamsProps = {
+  exerciseId: string
+}
 
 export function Exercise() {
   const navigation = useNavigation<AppNavigatorRoutesProps>()
+  const [exercise, setExercise] = useState<ExerciseDTO>({} as ExerciseDTO)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const route = useRoute()
+  const { exerciseId } = route.params as RouteParamsProps
+
+  console.log(exerciseId)
+  console.log(exercise?.demo)
+
+  const toast = useToast()
 
   function handleGoBack() {
     navigation.goBack()
   }
+
+  useEffect(() => {
+    async function fetchExerciseDetails() {
+      try {
+        setIsLoading(true)
+        const response = await api.get(`/exercises/${exerciseId}`)
+
+        setExercise(response.data)
+      } catch (error) {
+        const isAppError = error instanceof AppError
+        const title = isAppError
+          ? error.message
+          : 'Unable to load exercise details.'
+
+        toast.show({
+          title,
+          placement: 'top',
+          bgColor: 'red.500',
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchExerciseDetails()
+  }, [exerciseId, toast])
 
   return (
     <VStack>
@@ -42,54 +88,59 @@ export function Exercise() {
             color="gray.100"
             fontSize="lg"
             flexShrink={1}
-            fontFamily="headiing"
+            fontFamily="heading"
           >
-            Front Pull-Down
+            {exercise.name}
           </Heading>
           <HStack alignItems="center">
             <BodySvg />
             <Text color="gray.200" ml={1} textTransform="capitalize">
-              Back
+              {exercise.group}
             </Text>
           </HStack>
         </HStack>
       </VStack>
       <ScrollView>
-        <VStack p={8}>
-          <Image
-            source={{
-              uri: 'https://www.nfpt.com/wp-content/uploads/one-arm-row-800x565.jpg',
-            }}
-            alt="Exercise Image"
-            w="full"
-            h={80}
-            rounded="lg"
-            mb={3}
-            resizeMode="cover"
-          />
-          <Box bg="gray.600" rounded="md" pb={4} px={4}>
-            <HStack
-              alignItems="center"
-              justifyContent="space-around"
-              mb={6}
-              mt={5}
-            >
-              <HStack>
-                <SeriesSvg />
-                <Text color="gray.200" ml="2">
-                  3 series
-                </Text>
+        {isLoading ? (
+          <Loading />
+        ) : (
+          <VStack p={8}>
+            <Box rounded="lg" mb={3} overflow="hidden">
+              <Image
+                w="full"
+                h={80}
+                source={{
+                  uri: `${api.defaults.baseURL}/exercise/demo/${exercise?.demo}`,
+                }}
+                alt="Exercise name"
+                resizeMode="cover"
+                rounded="lg"
+              />
+            </Box>
+            <Box bg="gray.600" rounded="md" pb={4} px={4}>
+              <HStack
+                alignItems="center"
+                justifyContent="space-around"
+                mb={6}
+                mt={5}
+              >
+                <HStack>
+                  <SeriesSvg />
+                  <Text color="gray.200" ml="2">
+                    {exercise.series} series
+                  </Text>
+                </HStack>
+                <HStack>
+                  <RepsSvg />
+                  <Text color="gray.200" ml="2">
+                    {exercise.repetitions} reps
+                  </Text>
+                </HStack>
               </HStack>
-              <HStack>
-                <RepsSvg />
-                <Text color="gray.200" ml="2">
-                  12 reps
-                </Text>
-              </HStack>
-            </HStack>
-            <Button title="Check as finished" />
-          </Box>
-        </VStack>
+              <Button title="Check as finished" />
+            </Box>
+          </VStack>
+        )}
       </ScrollView>
     </VStack>
   )
