@@ -33,6 +33,7 @@ export function Exercise() {
   const navigation = useNavigation<AppNavigatorRoutesProps>()
   const [exercise, setExercise] = useState<ExerciseDTO>({} as ExerciseDTO)
   const [isLoading, setIsLoading] = useState(true)
+  const [sendingRegister, setSendingRegister] = useState(false)
 
   const route = useRoute()
   const { exerciseId } = route.params as RouteParamsProps
@@ -41,6 +42,33 @@ export function Exercise() {
 
   function handleGoBack() {
     navigation.goBack()
+  }
+
+  async function handleExerciseHistoryRegister() {
+    try {
+      setSendingRegister(true)
+
+      await api.post('/history', { exercise_id: exerciseId })
+
+      toast.show({
+        title: 'Congratulations! The exercise has been logged in your history.',
+        placement: 'top',
+        bgColor: 'green.500',
+      })
+
+      navigation.navigate('history')
+    } catch (error) {
+      const isAppError = error instanceof AppError
+      const title = isAppError ? error.message : 'Unable to register exercise'
+
+      toast.show({
+        title,
+        placement: 'top',
+        bgColor: 'red.500',
+      })
+    } finally {
+      setSendingRegister(false)
+    }
   }
 
   useEffect(() => {
@@ -134,7 +162,11 @@ export function Exercise() {
                   </Text>
                 </HStack>
               </HStack>
-              <Button title="Check as finished" />
+              <Button
+                onPress={handleExerciseHistoryRegister}
+                title="Check as finished"
+                isLoading={sendingRegister}
+              />
             </Box>
           </VStack>
         )}
