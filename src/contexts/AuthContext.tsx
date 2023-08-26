@@ -1,3 +1,5 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable camelcase */
 /* eslint-disable dot-notation */
 /* eslint-disable no-useless-catch */
 import { UserDTO } from '@dtos/UserDTO'
@@ -45,12 +47,16 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
     setUser(userData)
   }
 
-  async function saveStorageUserAndToken(userData: UserDTO, token: string) {
+  async function saveStorageUserAndToken(
+    userData: UserDTO,
+    token: string,
+    refresh_token: string,
+  ) {
     try {
       setIsLoadingUserStorageData(true)
 
       await saveStorageUser(userData)
-      await saveStorageAuthToken(token)
+      await saveStorageAuthToken({ token, refresh_token })
     } catch (error) {
       throw error
     } finally {
@@ -62,8 +68,8 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
     try {
       const { data } = await api.post('/sessions', { email, password })
 
-      if (data.user && data.token) {
-        await saveStorageUserAndToken(data.user, data.token)
+      if (data.user && data.token && data.refresh_token) {
+        await saveStorageUserAndToken(data.user, data.token, data.refresh_token)
         userAndTokenUpdate(data.user, data.token)
       }
     } catch (error) {
@@ -108,7 +114,7 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
         setIsLoadingUserStorageData(true)
 
         const isUserLogged = await getStorageUser()
-        const token = await getStorageAuthToken()
+        const { token } = await getStorageAuthToken()
 
         if (isUserLogged && token) {
           userAndTokenUpdate(isUserLogged, token)
@@ -122,6 +128,14 @@ export function AuthContextProvider({ children }: AuthContextProviderProps) {
 
     loadUserData()
   }, [])
+
+  useEffect(() => {
+    const subscribe = api.registerInterceptTokenManager(signOut)
+
+    return () => {
+      subscribe()
+    }
+  }, [signOut])
 
   return (
     <AuthContext.Provider
