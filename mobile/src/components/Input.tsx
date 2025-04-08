@@ -1,39 +1,53 @@
-import { Input as NativeBaseInput, IInputProps, FormControl } from 'native-base'
+// @components/Input.tsx
+import { FormControl, WarningOutlineIcon } from 'native-base'
+import { TextInput, Text, TextInputProps, StyleSheet, View } from 'react-native'
 
-type Props = IInputProps & {
+type Props = TextInputProps & {
   errorMessage?: string | null
 }
 
-export function Input({ errorMessage = null, isInvalid, ...rest }: Props) {
-  const invalid = !!errorMessage || isInvalid
+export function Input({ errorMessage = null, style, ...rest }: Props) {
+  const invalid = !!errorMessage
 
   return (
     <FormControl isInvalid={invalid} mb={4}>
-      <NativeBaseInput
-        bg="gray.700"
-        h={14}
-        px={4}
-        borderWidth={0}
-        fontSize="md"
-        color="white"
-        fontFamily="body"
-        placeholderTextColor="gray.300"
-        isInvalid={invalid}
-        _invalid={{
-          borderWidth: 1,
-          borderColor: 'red.500',
-        }}
-        _focus={{
-          bgColor: 'gray.700',
-          borderWidth: 1,
-          borderColor: 'green.500',
-        }}
+      <TextInput
+        style={[
+          styles.input,
+          invalid && styles.inputError,
+          style
+        ]}
+        placeholderTextColor="#A0AEC0"
+        autoCapitalize="none"
+        autoCorrect={false}
         {...rest}
       />
 
-      <FormControl.ErrorMessage _text={{ color: 'red.500' }}>
-        {errorMessage}
-      </FormControl.ErrorMessage>
+      {invalid && (
+        <FormControl.ErrorMessage
+          leftIcon={<WarningOutlineIcon size="xs" />}
+          _text={{ color: 'red.500' }}
+        >
+          {errorMessage}
+        </FormControl.ErrorMessage>
+      )}
     </FormControl>
   )
 }
+
+const styles = StyleSheet.create({
+  input: {
+    height: 56,
+    backgroundColor: '#000000',
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    fontSize: 16,
+    color: '#FFFFFF',
+    borderWidth: 0,
+    width: '100%',
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: '#E53E3E',
+  },
+})
